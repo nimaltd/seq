@@ -72,7 +72,7 @@ Run the same command again. The code is replaced and your `seq_config.h` is kept
 By default you get the newest code on `master`. To hold a project on one release, add `--ref` with a tag, a branch or a commit:
 
 ```bash
-stm32-installer nimaltd/sequencer --ref v2.0.1
+stm32-installer nimaltd/sequencer --ref v2.0.0
 ```
 
 ### Or copy the files in by hand
