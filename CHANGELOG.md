@@ -3,6 +3,19 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-09-28
+
+### Changed
+
+- Installed with stm32-installer, the code now keeps its `src/` folder, with your
+  `seq_config.h` beside `seq.h`, instead of every file sitting at the top of one
+  folder. Nothing in the code changed.
+- Needs stm32-installer 1.3.0 or newer. Updating an earlier install moves your
+  `seq_config.h` into `src/` with your settings in it, removes the old copies of
+  `seq.h` and `seq.c`, and points Keil, IAR and a CubeMX Makefile at the new
+  places. An older installer stops and says to update, rather than leave both
+  copies of `seq.c` in the project.
+
 ## [2.0.0] - 2026-09-24
 
 ### Changed

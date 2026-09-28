@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(seq
-    VERSION     2.0.0
+    VERSION     2.0.1
     LANGUAGES   C
     DESCRIPTION "Non blocking state sequencer and interrupt task queue for STM32"
     HOMEPAGE_URL "https://github.com/nimaltd/sequencer")

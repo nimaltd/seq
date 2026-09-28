@@ -32,9 +32,10 @@ src/    seq.h, seq.c, seq_config.h
 test/   host unit tests, run on a PC
 ```
 
-When the library is installed into a project it is flattened: `seq.h`, `seq.c` and
-`seq_config.h` sit in one folder with no `src/` or `test/`. The section below about
-the tests refers to this repository, not to an installed copy.
+Installed into a project, the code keeps its `src/` folder, with your `seq_config.h`
+beside `seq.h`, and the README, changelog and licence files around it. There is no
+`test/`: the section below about the tests refers to this repository, not to an
+installed copy.
 
 ---
 
@@ -71,7 +72,7 @@ Run the same command again. The code is replaced and your `seq_config.h` is kept
 By default you get the newest code on `master`. To hold a project on one release, add `--ref` with a tag, a branch or a commit:
 
 ```bash
-stm32-installer nimaltd/sequencer --ref v2.0.0
+stm32-installer nimaltd/sequencer --ref v2.0.1
 ```
 
 ### Or copy the files in by hand
