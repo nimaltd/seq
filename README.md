@@ -41,7 +41,7 @@ installed copy.
 
 ## ⚙️ Installing it
 
-[stm32-installer](https://github.com/nimaltd/stm32-installer) copies the library into your project, creates your `seq_config.h`, and adds it to your CMake, STM32CubeIDE, Keil or IAR project for you. Your project file is backed up first.
+[stm32-installer](https://github.com/nimaltd/stm32-installer) copies the library into your project, creates your `seq_config.h`, and adds it to your CMake, STM32CubeIDE, Keil, IAR or Makefile project for you. Your project file is backed up first.
 
 Install it once per machine:
 
