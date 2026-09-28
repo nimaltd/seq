@@ -4,7 +4,7 @@ project(seq
     VERSION     2.0.1
     LANGUAGES   C
     DESCRIPTION "Non blocking state sequencer and interrupt task queue for STM32"
-    HOMEPAGE_URL "https://github.com/nimaltd/sequencer")
+    HOMEPAGE_URL "https://github.com/nimaltd/seq")
 
 option(SEQ_BUILD_TESTS "Build the host unit tests" OFF)
 

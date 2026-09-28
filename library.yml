@@ -3,9 +3,9 @@
 # There is no version here. The installer reads it from the @version tag in
 # seq.h, so the source files are the only place it is written.
 
-name: sequencer
+name: seq
 description: Non blocking state sequencer and interrupt task queue for STM32
-repository: https://github.com/nimaltd/sequencer
+repository: https://github.com/nimaltd/seq
 license: Apache-2.0
 
 # What this library is.

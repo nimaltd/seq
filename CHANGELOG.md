@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- **Renamed from `sequencer` to `seq`**, the name its files and functions
+  already carry, like the other NimaLTD libraries. GitHub sends the old address
+  to the new one. Install it as `stm32-installer nimaltd/seq`, and it lands in a
+  folder called `seq`.
 - Installed with stm32-installer, the code now keeps its `src/` folder, with your
   `seq_config.h` beside `seq.h`, instead of every file sitting at the top of one
   folder. Nothing in the code changed.

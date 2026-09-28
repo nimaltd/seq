@@ -1,7 +1,7 @@
-# 🌀 sequencer
+# 🌀 seq
 
-[![CI](https://github.com/nimaltd/sequencer/actions/workflows/ci.yml/badge.svg)](https://github.com/nimaltd/sequencer/actions/workflows/ci.yml)
-[![Stars](https://img.shields.io/github/stars/NimaLTD/sequencer?style=social)](https://github.com/nimaltd/sequencer)
+[![CI](https://github.com/nimaltd/seq/actions/workflows/ci.yml/badge.svg)](https://github.com/nimaltd/seq/actions/workflows/ci.yml)
+[![Stars](https://img.shields.io/github/stars/nimaltd/seq?style=social)](https://github.com/nimaltd/seq)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE.md)
 
 A small non blocking state sequencer with a built in task queue, written in C for STM32.
@@ -52,15 +52,15 @@ pip install stm32-installer
 Then, from the root of your STM32 project:
 
 ```bash
-stm32-installer nimaltd/sequencer
+stm32-installer nimaltd/seq
 ```
 
 ### From a downloaded zip
 
-Downloaded this repository with **Code**, **Download ZIP**? Give the installer the zip in place of `nimaltd/sequencer`, with no need to unpack it:
+Downloaded this repository with **Code**, **Download ZIP**? Give the installer the zip in place of `nimaltd/seq`, with no need to unpack it:
 
 ```bash
-stm32-installer D:/Downloads/sequencer-master.zip
+stm32-installer D:/Downloads/seq-master.zip
 ```
 
 Only the files the library needs are copied into your project, and the zip is left alone. An unpacked folder works the same way. [stm32-installer's README](https://github.com/nimaltd/stm32-installer#installing-a-library) has every option, and how to install on a machine with no internet at all.
@@ -72,7 +72,7 @@ Run the same command again. The code is replaced and your `seq_config.h` is kept
 By default you get the newest code on `master`. To hold a project on one release, add `--ref` with a tag, a branch or a commit:
 
 ```bash
-stm32-installer nimaltd/sequencer --ref v2.0.0
+stm32-installer nimaltd/seq --ref v2.0.0
 ```
 
 ### Or copy the files in by hand
@@ -88,7 +88,7 @@ Once you have copied it, that copy is yours. The installer creates it only when 
 If you keep this repository as a submodule rather than installing it:
 
 ```cmake
-add_subdirectory(sequencer)
+add_subdirectory(seq)
 target_link_libraries(your_app PRIVATE nimaltd::seq)
 
 # This line is needed because the target above is a static library, which does

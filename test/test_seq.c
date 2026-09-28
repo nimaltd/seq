@@ -1,6 +1,6 @@
 /**
  * @file        test_seq.c
- * @brief       Host unit tests for the sequencer library, built on Unity.
+ * @brief       Host unit tests for the seq library, built on Unity.
  * @version     2.0.1
  *
  * @author      Nima Askari (NimaLTD)
