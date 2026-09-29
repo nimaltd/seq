@@ -89,15 +89,17 @@ If you keep this repository as a submodule rather than installing it:
 
 ```cmake
 add_subdirectory(seq)
-target_link_libraries(your_app PRIVATE nimaltd::seq)
+target_link_libraries(${CMAKE_PROJECT_NAME} nimaltd::seq)
 
-# This line is needed because the target above is a static library, which does
-# not inherit your application's include paths, and seq.c has to find your
-# seq_config.h and your main.h.
-target_include_directories(seq PRIVATE ${CMAKE_SOURCE_DIR}/Core/Inc)
+# seq is a static library, so it does not inherit your application's include
+# paths and defines, and seq.c needs main.h and the HAL. A CubeMX project
+# keeps them on the stm32cubemx target.
+target_link_libraries(seq PRIVATE stm32cubemx)
 ```
 
-`stm32-installer` avoids that last line entirely: it writes an INTERFACE target instead, whose sources compile as part of your own target and inherit everything it has.
+The first `target_link_libraries` has no `PRIVATE` on purpose. CubeMX links your application without one, and CMake refuses to mix the two forms on one target. The settings come from `seq/src/seq_config.h`, beside `seq.h`.
+
+`stm32-installer` avoids all of this: it writes an INTERFACE target instead, whose sources compile as part of your own target and inherit everything it has.
 
 ---
 
