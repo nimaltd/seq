@@ -72,16 +72,7 @@ static seq_queue_t seq_queue;
  * ****************************************************************************************************
 */
 
-/*****************************************************************************************************/
-/**
- * @brief Mark the first run of a new state, and restart its clock.
- */
 static void seq_enter(seq_t *handle);
-
-/*****************************************************************************************************/
-/**
- * @brief Run the tasks that were queued when the call began.
- */
 static void seq_queue_run(void);
 
 /*

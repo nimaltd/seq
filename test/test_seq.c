@@ -86,82 +86,18 @@ int seq_test_primask = 0;
  * ****************************************************************************************************
 */
 
-/*****************************************************************************************************/
-/**
- * @brief Empty the task queue so a test starts from a known state.
- */
 static void queue_drain(void);
-
-/*****************************************************************************************************/
-/**
- * @brief A state that counts how often it ran and remembers what it was handed.
- */
 static void state_a(seq_t *handle, void *arg);
-
-/*****************************************************************************************************/
-/**
- * @brief A second state, so transitions can be observed.
- */
 static void state_b(seq_t *handle, void *arg);
-
-/*****************************************************************************************************/
-/**
- * @brief A state that does nothing, used while draining the queue.
- */
 static void state_noop(seq_t *handle, void *arg);
-
-/*****************************************************************************************************/
-/**
- * @brief A state that counts a run into the counter_t its handle is part of.
- */
 static void state_counts_into_owner(seq_t *handle, void *arg);
-
-/*****************************************************************************************************/
-/**
- * @brief A queued task that counts how often it ran and remembers its argument.
- */
 static void task_one(void *arg);
-
-/*****************************************************************************************************/
-/**
- * @brief A second queued task, so two can be told apart.
- */
 static void task_two(void *arg);
-
-/*****************************************************************************************************/
-/**
- * @brief A task that queues itself again, up to requeue_limit times.
- */
 static void task_requeues(void *arg);
-
-/*****************************************************************************************************/
-/**
- * @brief A task that adds what its argument points at to a running total.
- */
 static void task_sums(void *arg);
-
-/*****************************************************************************************************/
-/**
- * @brief A state that gives up after five seconds, the way a real one would.
- */
 static void state_waits_then_times_out(seq_t *handle, void *arg);
-
-/*****************************************************************************************************/
-/**
- * @brief A state that counts its runs by what seq_first_run() says about each.
- */
 static void state_counts_first_runs(seq_t *handle, void *arg);
-
-/*****************************************************************************************************/
-/**
- * @brief A state that asks for a transition, then asks seq_first_run().
- */
 static void state_moves_on_then_asks(seq_t *handle, void *arg);
-
-/*****************************************************************************************************/
-/**
- * @brief A task that queues task_one and flushes the queue, the first time it runs.
- */
 static void task_queues_then_flushes(void *arg);
 
 /*
