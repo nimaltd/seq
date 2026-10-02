@@ -60,7 +60,7 @@ stm32-installer nimaltd/seq
 Downloaded this repository with **Code**, **Download ZIP**? Give the installer the zip in place of `nimaltd/seq`, with no need to unpack it:
 
 ```bash
-stm32-installer D:/Downloads/seq-master.zip
+stm32-installer D:/Downloads/seq-main.zip
 ```
 
 Only the files the library needs are copied into your project, and the zip is left alone. An unpacked folder works the same way. [stm32-installer's README](https://github.com/nimaltd/stm32-installer#installing-a-library) has every option, and how to install on a machine with no internet at all.
@@ -69,7 +69,7 @@ Only the files the library needs are copied into your project, and the zip is le
 
 Run the same command again. The code is replaced and your `seq_config.h` is kept.
 
-By default you get the newest code on `master`. To hold a project on one release, add `--ref` with a tag, a branch or a commit:
+By default you get the newest code on `main`. To hold a project on one release, add `--ref` with a tag, a branch or a commit:
 
 ```bash
 stm32-installer nimaltd/seq --ref v2.0.0
