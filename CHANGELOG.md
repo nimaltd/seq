@@ -3,6 +3,22 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-10-05
+
+### Changed
+
+- **A `NULL` pointer is caught by `assert_param()` only**, as the HAL does,
+  and is no longer tested again in the code. A `NULL` is a bug in the calling
+  code: with **Enable Full Assert** on in CubeMX it stops in `assert_failed()`
+  at the line that found it. Without it nothing checks, so turn it on while
+  developing. `seq_task_add(NULL, ...)` therefore no longer returns
+  `SEQ_ERR_INVALID`. The value is still defined, so code that names it
+  compiles, and a `NULL` task that gets into the queue is skipped, never
+  called.
+- `seq_loop()` is one pass with a single place that runs the state, instead
+  of two. Behaviour is unchanged.
+- The code is 24 bytes smaller on a Cortex-M4 at `-Os`.
+
 ## [2.0.1] - 2026-09-28
 
 ### Changed

@@ -36,9 +36,9 @@
 /* CMSIS spells volatile this way. */
 #define __IO                volatile
 
-/* The HAL compiles this out unless USE_FULL_ASSERT is set, so the stub matches
-   the configuration the library ships in. */
-#define assert_param(expr)  ((void)0U)
+/* As the HAL defines it with USE_FULL_ASSERT set, so the tests see a NULL
+   argument stopped. The tests define assert_failed(). */
+#define assert_param(expr)  ((expr) ? (void)0U : assert_failed((uint8_t *)__FILE__, __LINE__))
 
 /* The tests are single threaded, so ordering needs no barrier here. */
 #define __DMB()
@@ -68,6 +68,12 @@ extern void seq_test_hook(void);
  * Public function prototypes
  * ****************************************************************************************************
 */
+
+/*****************************************************************************************************/
+/**
+ * @brief Where a failed assert_param lands. The tests define it.
+ */
+void assert_failed(uint8_t *file, uint32_t line);
 
 /*****************************************************************************************************/
 /**

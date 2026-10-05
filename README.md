@@ -374,7 +374,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 | `uint32_t seq_task_peak(void)` | The most tasks ever queued at once |
 | `void seq_task_flush(void)` | Drop everything queued. Fine from the main loop or from a task, not from an interrupt |
 
-`seq_task_add()` returns `SEQ_ERR_NONE` when the task was queued, `SEQ_ERR_FULL` when the queue is full, or `SEQ_ERR_INVALID` when `task_fn` is `NULL`. It is the only call that is safe from an interrupt, and `seq_loop()` must have a single caller, since two would both consume the queue and could take the same task twice.
+`seq_task_add()` returns `SEQ_ERR_NONE` when the task was queued, or `SEQ_ERR_FULL` when the queue is full. It is the only call that is safe from an interrupt, and `seq_loop()` must have a single caller, since two would both consume the queue and could take the same task twice.
+
+A `NULL` pointer is a bug in the calling code, so no function returns it as an error: `assert_param()` stops at it, the way the HAL does. That needs **Enable Full Assert** in CubeMX (Project Manager, Code Generator), which defines `USE_FULL_ASSERT`. Turn it on while developing, and a `NULL` lands in `assert_failed()` with the file and line. Without it nothing checks, except that a `NULL` task is skipped rather than called. `SEQ_ERR_INVALID` is still defined, so code that names it compiles, but nothing returns it.
 
 Use `seq_task_peak()` to size `SEQ_MAX_TASKS` by measurement. A full queue is reported to the caller, but that caller is usually an interrupt handler where nobody checks a return value, so the peak is in practice the only way to find out you were close to overflowing.
 

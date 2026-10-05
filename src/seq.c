@@ -1,7 +1,7 @@
 /**
  * @file        seq.c
  * @brief       Non blocking state sequencer and interrupt task queue for STM32.
- * @version     2.0.1
+ * @version     2.1.0
  *
  * @author      Nima Askari (NimaLTD)
  * @email       nima.askari@gmail.com
@@ -94,17 +94,14 @@ void seq_init(seq_t *handle, seq_state_fn_t first_fn, void *arg)
     assert_param(handle != NULL);
     assert_param(first_fn != NULL);
 
-    if ((handle != NULL) && (first_fn != NULL))
-    {
-        /* This is simply the first transition: no wait, so first_fn runs on
-           the next seq_loop(), handed arg the way seq_next() would hand it. */
-        handle->next_fn   = first_fn;
-        handle->arg       = arg;
-        handle->wait_ms   = 0U;
-        handle->time      = HAL_GetTick(); /* Sane value for seq_time() before the first run. */
-        handle->entering  = 1U;
-        handle->first_run = 0U;
-    }
+    /* This is simply the first transition: no wait, so first_fn runs on the
+       next seq_loop(), handed arg the way seq_next() would hand it. */
+    handle->next_fn   = first_fn;
+    handle->arg       = arg;
+    handle->wait_ms   = 0U;
+    handle->time      = HAL_GetTick(); /* Sane value for seq_time() before the first run. */
+    handle->entering  = 1U;
+    handle->first_run = 0U;
 }
 
 /*****************************************************************************************************/
@@ -117,34 +114,37 @@ void seq_loop(seq_t *handle)
 {
     assert_param(handle != NULL);
 
-    if (handle != NULL)
-    {
-        /* Tasks first, so work an interrupt handed over is not held up by a
-           state that is still waiting to run. */
-        seq_queue_run();
+    /* Tasks first, so work an interrupt handed over is not held up by a state
+       that is still waiting to run. */
+    seq_queue_run();
 
-        if (handle->next_fn != NULL)
+    /* Runs once. A state that may not run yet breaks out. */
+    do
+    {
+        /* A stopped machine has no state to run. */
+        if (handle->next_fn == NULL)
         {
-            if (handle->wait_ms == 0U)
-            {
-                /* No wait: the state runs on every pass until it moves on. */
-                seq_enter(handle);
-                handle->next_fn(handle, handle->arg);
-            }
-            else if ((HAL_GetTick() - handle->time) >= handle->wait_ms)
-            {
-                /* Clear the wait before the state runs, so the state itself is
-                   free to ask for a new one. */
-                handle->wait_ms = 0U;
-                seq_enter(handle);
-                handle->next_fn(handle, handle->arg);
-            }
-            else
-            {
-                /* Still waiting, nothing to do. */
-            }
+            break;
         }
+
+        if (handle->wait_ms != 0U)
+        {
+            /* Still waiting, nothing to do. */
+            if ((HAL_GetTick() - handle->time) < handle->wait_ms)
+            {
+                break;
+            }
+
+            /* The wait is over. Clear it before the state runs, so the state
+               itself is free to ask for a new one. */
+            handle->wait_ms = 0U;
+        }
+
+        /* With no wait, the state runs on every pass until it moves on. */
+        seq_enter(handle);
+        handle->next_fn(handle, handle->arg);
     }
+    while (false);
 }
 
 /*****************************************************************************************************/
@@ -161,23 +161,20 @@ void seq_next(seq_t *handle, seq_state_fn_t next_fn, void *arg, uint32_t wait_ms
     assert_param(handle != NULL);
     assert_param(next_fn != NULL);
 
-    if ((handle != NULL) && (next_fn != NULL))
-    {
-        /* The wait counts from this call, not from when the current state
-           returns. Nothing blocks while it runs: seq_loop() keeps returning at
-           once and keeps serving the task queue. */
-        handle->wait_ms  = wait_ms;
-        handle->time     = HAL_GetTick();
-        handle->next_fn  = next_fn;
+    /* The wait counts from this call, not from when the current state
+       returns. Nothing blocks while it runs: seq_loop() keeps returning at
+       once and keeps serving the task queue. */
+    handle->wait_ms  = wait_ms;
+    handle->time     = HAL_GetTick();
+    handle->next_fn  = next_fn;
 
-        /* Only the pointer is kept, so what it points at has to outlive the
-           wait: a static, a global or a field of the user's struct, never a
-           local, since the caller returns long before the next state runs. */
-        handle->arg      = arg;
+    /* Only the pointer is kept, so what it points at has to outlive the wait:
+       a static, a global or a field of the user's struct, never a local,
+       since the caller returns long before the next state runs. */
+    handle->arg      = arg;
 
-        /* The next run is a first run, which seq_first_run() reports. */
-        handle->entering = 1U;
-    }
+    /* The next run is a first run, which seq_first_run() reports. */
+    handle->entering = 1U;
 }
 
 /*****************************************************************************************************/
@@ -196,7 +193,7 @@ uint32_t seq_time(const seq_t *handle)
     /* A stopped machine has no state to time. Otherwise this counts from
        the last transition asked for, and once the state starts running,
        from its first run, which seq_enter() marks. */
-    if ((handle != NULL) && (handle->next_fn != NULL))
+    if (handle->next_fn != NULL)
     {
         elapsed = HAL_GetTick() - handle->time;
     }
@@ -218,7 +215,7 @@ bool seq_first_run(const seq_t *handle)
     /* Set by seq_enter() for exactly one run after each transition. Checking
        seq_time() for 0 would not do: the main loop can go round many times in
        one millisecond. */
-    return (handle != NULL) && (handle->first_run != 0U);
+    return handle->first_run != 0U;
 }
 
 /*****************************************************************************************************/
@@ -231,15 +228,12 @@ void seq_stop(seq_t *handle)
 {
     assert_param(handle != NULL);
 
-    if (handle != NULL)
-    {
-        /* No state left to run. The task queue is not touched: it belongs to
-           the application, not to this machine, so its tasks keep running. */
-        handle->next_fn   = NULL;
-        handle->wait_ms   = 0U;
-        handle->entering  = 0U;
-        handle->first_run = 0U;
-    }
+    /* No state left to run. The task queue is not touched: it belongs to the
+       application, not to this machine, so its tasks keep running. */
+    handle->next_fn   = NULL;
+    handle->wait_ms   = 0U;
+    handle->entering  = 0U;
+    handle->first_run = 0U;
 }
 
 /*****************************************************************************************************/
@@ -253,7 +247,7 @@ bool seq_running(const seq_t *handle)
 {
     assert_param(handle != NULL);
 
-    return (handle != NULL) && (handle->next_fn != NULL);
+    return handle->next_fn != NULL;
 }
 
 /*****************************************************************************************************/
@@ -292,67 +286,64 @@ void seq_task_flush(void)
  *
  * @param[in] task_fn  Task to queue.
  * @param[in] arg      Handed to the task. What it points at must outlive the call.
- * @return SEQ_ERR_NONE, SEQ_ERR_FULL or SEQ_ERR_INVALID.
+ * @return SEQ_ERR_NONE or SEQ_ERR_FULL.
  */
 seq_err_t seq_task_add(seq_task_fn_t task_fn, void *arg)
 {
-    seq_err_t err = SEQ_ERR_INVALID;
+    seq_err_t err = SEQ_ERR_FULL;
 
+    /* Before interrupts are disabled, so a NULL caught here leaves them as
+       they were. */
     assert_param(task_fn != NULL);
 
-    if (task_fn != NULL)
+    /* Claiming a slot is read, write, publish, and a higher priority interrupt
+       landing in the middle of that would claim the same slot and one of the
+       two tasks would vanish with no error reported. Saving and restoring
+       PRIMASK, rather than simply enabling interrupts at the end, keeps this
+       safe to call from code that already has them disabled. */
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+
     {
-        err = SEQ_ERR_FULL;
+        uint32_t head      = seq_queue.head;
+        uint32_t next_head = (head + 1U) % SEQ_MAX_TASKS;
 
-        /* Claiming a slot is read, write, publish, and a higher priority
-           interrupt landing in the middle of that would claim the same slot and
-           one of the two tasks would vanish with no error reported. Saving and
-           restoring PRIMASK, rather than simply enabling interrupts at the end,
-           keeps this safe to call from code that already has them disabled. */
-        uint32_t primask = __get_PRIMASK();
-        __disable_irq();
+        SEQ_TEST_HOOK();
 
+        /* Leaving one slot free is what lets a full queue be told apart from
+           an empty one, since both would otherwise have head == tail. */
+        if (next_head != seq_queue.tail)
         {
-            uint32_t head      = seq_queue.head;
-            uint32_t next_head = (head + 1U) % SEQ_MAX_TASKS;
+            /* The argument is copied into the queue, but not what it points
+               at. The task runs later, from seq_loop(), which is what keeps
+               the interrupt handler short. */
+            seq_queue.fn[head]  = task_fn;
+            seq_queue.arg[head] = arg;
 
-            SEQ_TEST_HOOK();
+            /* The slot has to be visible before head publishes it, or the main
+               loop can read a stale pointer out of it. Both members are
+               written first, so a consumer that sees the new head sees the
+               task and its argument together. */
+            __DMB();
 
-            /* Leaving one slot free is what lets a full queue be told apart
-               from an empty one, since both would otherwise have head == tail. */
-            if (next_head != seq_queue.tail)
+            seq_queue.head = next_head;
+            err            = SEQ_ERR_NONE;
+
+            /* Remember the deepest the queue has been. A full queue is
+               reported here, but usually to an interrupt nobody checks, so the
+               peak is the only way to see it came close. */
             {
-                /* The argument is copied into the queue, but not what it
-                   points at. The task runs later, from seq_loop(), which is
-                   what keeps the interrupt handler short. */
-                seq_queue.fn[head]  = task_fn;
-                seq_queue.arg[head] = arg;
+                uint32_t depth = (next_head + SEQ_MAX_TASKS - seq_queue.tail) % SEQ_MAX_TASKS;
 
-                /* The slot has to be visible before head publishes it, or the
-                   main loop can read a stale pointer out of it. Both members
-                   are written first, so a consumer that sees the new head sees
-                   the task and its argument together. */
-                __DMB();
-
-                seq_queue.head = next_head;
-                err            = SEQ_ERR_NONE;
-
-                /* Remember the deepest the queue has been. A full queue is
-                   reported here, but usually to an interrupt nobody checks,
-                   so the peak is the only way to see it came close. */
+                if (depth > seq_queue.peak)
                 {
-                    uint32_t depth = (next_head + SEQ_MAX_TASKS - seq_queue.tail) % SEQ_MAX_TASKS;
-
-                    if (depth > seq_queue.peak)
-                    {
-                        seq_queue.peak = depth;
-                    }
+                    seq_queue.peak = depth;
                 }
             }
         }
-
-        __set_PRIMASK(primask);
     }
+
+    __set_PRIMASK(primask);
 
     return err;
 }
@@ -432,6 +423,9 @@ static void seq_queue_run(void)
 
         __DMB();
 
+        /* A NULL gets here only past a disabled assert_param in
+           seq_task_add(). It is skipped rather than called through address 0
+           in the middle of the main loop, far from the bug. */
         if (task_fn != NULL)
         {
             task_fn(task_arg);

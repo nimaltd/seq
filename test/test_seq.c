@@ -1,7 +1,7 @@
 /**
  * @file        test_seq.c
  * @brief       Host unit tests for the seq library, built on Unity.
- * @version     2.0.1
+ * @version     2.1.0
  *
  * @author      Nima Askari (NimaLTD)
  * @email       nima.askari@gmail.com
@@ -25,6 +25,7 @@
  * ****************************************************************************************************
 */
 
+#include <setjmp.h>
 #include "unity.h"
 
 #include "seq.h"
@@ -80,6 +81,12 @@ static seq_task_fn_t queue_preempt_with = NULL;
 /* Stands in for the real PRIMASK. Zero means interrupts are enabled. */
 int seq_test_primask = 0;
 
+/* assert_param, as CubeMX builds it with Enable Full Assert. */
+static jmp_buf assert_return;
+static bool    assert_expected = false;
+static bool    assert_returns  = false;
+static int     asserts         = 0;
+
 /*
  * ****************************************************************************************************
  * Private function prototypes
@@ -87,6 +94,7 @@ int seq_test_primask = 0;
 */
 
 static void queue_drain(void);
+static bool assert_stops(int which);
 static void state_a(seq_t *handle, void *arg);
 static void state_b(seq_t *handle, void *arg);
 static void state_noop(seq_t *handle, void *arg);
@@ -119,6 +127,37 @@ uint32_t HAL_GetTick(void)
 
 /*****************************************************************************************************/
 /**
+ * @brief Where assert_param lands with USE_FULL_ASSERT, as the user's main.c defines it.
+ *
+ * A test that expects it jumps back to assert_stops(). Anywhere else a valid
+ * call tripped an assert, which fails the test.
+ *
+ * @param[in] file  Source file of the assert.
+ * @param[in] line  Its line.
+ */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+    (void)file;
+    (void)line;
+
+    asserts++;
+
+    /* As if the assert were compiled out: the call carries on. */
+    if (assert_returns)
+    {
+        return;
+    }
+
+    if (!assert_expected)
+    {
+        TEST_FAIL_MESSAGE("assert_param stopped a valid call");
+    }
+
+    longjmp(assert_return, 1);
+}
+
+/*****************************************************************************************************/
+/**
  * @brief Put the library back to a known state before every test.
  *
  * The task queue lives in a file scope variable inside seq.c, so anything a
@@ -126,7 +165,10 @@ uint32_t HAL_GetTick(void)
  */
 void setUp(void)
 {
-    test_tick = 0U;
+    test_tick       = 0U;
+    assert_expected = false;
+    assert_returns  = false;
+    asserts         = 0;
 
     queue_drain();
 
@@ -503,18 +545,49 @@ void test_queue_wraps_around(void)
 
 /*****************************************************************************************************/
 /**
- * @brief NULL arguments are refused instead of crashing.
+ * @brief A NULL pointer is stopped by assert_param before anything is touched.
+ *
+ * The library does not test pointers again: a NULL is the caller's bug, and a
+ * debug build with Enable Full Assert stops at the line that found it. In
+ * seq_task_add() the assert comes before interrupts are disabled, so stopping
+ * there leaves them on.
  */
-void test_null_arguments_are_refused(void)
+void test_null_pointers_are_caught_by_assert(void)
 {
-    TEST_ASSERT_EQUAL_INT(SEQ_ERR_INVALID, seq_task_add(NULL, NULL));
-    TEST_ASSERT_EQUAL_UINT32(0U, seq_time(NULL));
+    int which = 0;
 
-    seq_init(NULL, state_a, NULL);
-    seq_loop(NULL);
-    seq_next(NULL, state_a, NULL, 0U);
+    for (which = 0; which < 10; which++)
+    {
+        TEST_ASSERT_TRUE_MESSAGE(assert_stops(which), "a NULL got past assert_param");
+    }
 
+    TEST_ASSERT_EQUAL_INT(10, asserts);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(0, seq_test_primask, "an assert left interrupts disabled");
     TEST_ASSERT_EQUAL_INT(0, state_a_calls);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SEQ_ERR_NONE, seq_task_add(task_one, NULL),
+                                  "a real task was refused after a NULL one");
+}
+
+/*****************************************************************************************************/
+/**
+ * @brief A NULL task that got past a compiled out assert is skipped, never called.
+ *
+ * Without Enable Full Assert nothing stops seq_task_add(NULL), so the main
+ * loop must not call through it, and the tasks after it must still run.
+ */
+void test_a_null_task_past_a_disabled_assert_is_skipped(void)
+{
+    assert_returns = true;
+    TEST_ASSERT_EQUAL_INT(SEQ_ERR_NONE, seq_task_add(NULL, NULL));
+    assert_returns = false;
+
+    TEST_ASSERT_EQUAL_INT(SEQ_ERR_NONE, seq_task_add(task_one, NULL));
+
+    seq_init(&test_seq, state_a, NULL);
+    seq_loop(&test_seq);
+
+    TEST_ASSERT_EQUAL_INT(1, asserts);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(1, task_calls, "the task after the NULL one did not run");
 }
 
 /*****************************************************************************************************/
@@ -737,31 +810,6 @@ void test_flush_empties_the_queue(void)
 
 /*****************************************************************************************************/
 /**
- * @brief Stopping and reading a NULL handle is refused, not followed.
- */
-void test_null_is_refused_by_the_new_calls(void)
-{
-    seq_stop(NULL);
-
-    TEST_ASSERT_FALSE(seq_running(NULL));
-}
-
-/*****************************************************************************************************/
-/**
- * @brief A NULL task is told apart from a full queue.
- *
- * Both used to return SEQ_ERR_FULL, which said the queue was the problem when
- * the argument was.
- */
-void test_a_null_task_is_not_reported_as_a_full_queue(void)
-{
-    TEST_ASSERT_EQUAL_INT(SEQ_ERR_INVALID, seq_task_add(NULL, NULL));
-    TEST_ASSERT_EQUAL_INT_MESSAGE(SEQ_ERR_NONE, seq_task_add(task_one, NULL),
-                                  "a real task was refused after a NULL one");
-}
-
-/*****************************************************************************************************/
-/**
  * @brief A stopped machine reports no elapsed time.
  *
  * It is in no state, so a number counting up from the last transition would
@@ -931,8 +979,6 @@ void test_first_run_is_false_outside_a_run(void)
     seq_loop(&test_seq);
     seq_stop(&test_seq);
     TEST_ASSERT_FALSE_MESSAGE(seq_first_run(&test_seq), "reported by a stopped machine");
-
-    TEST_ASSERT_FALSE(seq_first_run(NULL));
 }
 
 /*****************************************************************************************************/
@@ -965,7 +1011,8 @@ int main(void)
     RUN_TEST(test_a_task_that_requeues_itself_does_not_trap_the_loop);
     RUN_TEST(test_work_queued_during_a_burst_waits);
     RUN_TEST(test_queue_wraps_around);
-    RUN_TEST(test_null_arguments_are_refused);
+    RUN_TEST(test_null_pointers_are_caught_by_assert);
+    RUN_TEST(test_a_null_task_past_a_disabled_assert_is_skipped);
     RUN_TEST(test_time_grows_while_a_state_runs);
     RUN_TEST(test_a_timeout_actually_fires);
     RUN_TEST(test_time_restarts_on_a_real_transition);
@@ -976,8 +1023,6 @@ int main(void)
     RUN_TEST(test_a_stopped_machine_still_serves_the_queue);
     RUN_TEST(test_the_queue_reports_how_deep_it_ever_got);
     RUN_TEST(test_flush_empties_the_queue);
-    RUN_TEST(test_null_is_refused_by_the_new_calls);
-    RUN_TEST(test_a_null_task_is_not_reported_as_a_full_queue);
     RUN_TEST(test_time_is_zero_once_stopped);
     RUN_TEST(test_a_flush_inside_a_task_runs_nothing_again);
     RUN_TEST(test_first_run_is_only_the_first);
@@ -993,6 +1038,73 @@ int main(void)
  * Private function implementations
  * ****************************************************************************************************
 */
+
+/*****************************************************************************************************/
+/**
+ * @brief Make one call with a NULL pointer, and say whether assert_param stopped it.
+ *
+ * @param[in] which  0 to 9: each public call that takes a pointer, with it NULL.
+ * @return true when the call stopped at an assert instead of returning.
+ */
+static bool assert_stops(int which)
+{
+    bool stopped = true;
+
+    assert_expected = true;
+
+    if (setjmp(assert_return) == 0)
+    {
+        switch (which)
+        {
+            case 0:
+                seq_init(NULL, state_a, NULL);
+                break;
+
+            case 1:
+                seq_init(&test_seq, NULL, NULL);
+                break;
+
+            case 2:
+                seq_loop(NULL);
+                break;
+
+            case 3:
+                seq_next(NULL, state_a, NULL, 0U);
+                break;
+
+            case 4:
+                seq_next(&test_seq, NULL, NULL, 0U);
+                break;
+
+            case 5:
+                (void)seq_time(NULL);
+                break;
+
+            case 6:
+                (void)seq_first_run(NULL);
+                break;
+
+            case 7:
+                seq_stop(NULL);
+                break;
+
+            case 8:
+                (void)seq_running(NULL);
+                break;
+
+            default:
+                (void)seq_task_add(NULL, NULL);
+                break;
+        }
+
+        /* Back here means no assert stopped it. */
+        stopped = false;
+    }
+
+    assert_expected = false;
+
+    return stopped;
+}
 
 /*****************************************************************************************************/
 /**

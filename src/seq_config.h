@@ -1,7 +1,7 @@
 /**
  * @file        seq_config.h
  * @brief       Build time configuration for the seq library.
- * @version     2.0.1
+ * @version     2.1.0
  *
  * @author      Nima Askari (NimaLTD)
  * @email       nima.askari@gmail.com

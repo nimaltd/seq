@@ -1,7 +1,7 @@
 /**
  * @file        seq.h
  * @brief       Non blocking state sequencer and interrupt task queue for STM32.
- * @version     2.0.1
+ * @version     2.1.0
  *
  * @author      Nima Askari (NimaLTD)
  * @email       nima.askari@gmail.com
@@ -85,7 +85,7 @@ typedef enum
 {
     SEQ_ERR_NONE    = 0, /**< The task was queued.        */
     SEQ_ERR_FULL    = 1, /**< The task queue is full.     */
-    SEQ_ERR_INVALID = 2, /**< The task pointer was NULL.  */
+    SEQ_ERR_INVALID = 2, /**< Not returned since 2.1.0.   */
 
 } seq_err_t;
 
