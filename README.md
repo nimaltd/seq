@@ -41,7 +41,7 @@ installed copy.
 
 ## ⚙️ Installing it
 
-[stm32-installer](https://github.com/nimaltd/stm32-installer) copies the library into your project, creates your `seq_config.h`, and adds it to your CMake, STM32CubeIDE, Keil, IAR or Makefile project for you. Your project file is backed up first.
+[stm32-installer](https://github.com/nimaltd/stm32-installer) copies the library into your project, `seq_config.h` included, and adds it to your CMake, STM32CubeIDE, Keil, IAR or Makefile project for you. Your project file is backed up first.
 
 Install it once per machine:
 
@@ -67,7 +67,7 @@ Only the files the library needs are copied into your project, and the zip is le
 
 ### Updating, and pinning a version
 
-Run the same command again. The code is replaced and your `seq_config.h` is kept.
+Run the same command again. Every file is replaced, and your settings in `seq_config.h` are kept: whatever is between `USER CODE BEGIN SEQ_CONFIGURATION` and `USER CODE END SEQ_CONFIGURATION`. Anything you changed outside those lines is saved to a `.bak` file first. This needs stm32-installer 1.7.1 or newer, and an older one says to update.
 
 By default you get the newest code on `main`. To hold a project on one release, add `--ref` with a tag, a branch or a commit:
 
@@ -81,7 +81,7 @@ stm32-installer nimaltd/seq --ref v2.0.0
 2. Copy `src/seq.c` into your project's `Core/Src`
 3. Copy `src/seq_config.h` into `Core/Inc`
 
-Once you have copied it, that copy is yours. The installer creates it only when it is missing, so updating the library never overwrites a setting you changed.
+Keep your settings between its `USER CODE BEGIN` and `USER CODE END` lines. Installing later with stm32-installer keeps what is between them and replaces the rest.
 
 ### Or add the whole repository to a CMake build
 
@@ -105,7 +105,7 @@ The first `target_link_libraries` has no `PRIVATE` on purpose. CubeMX links your
 
 ## 🔧 Configuration
 
-Everything lives in your `seq_config.h`:
+Everything lives in your `seq_config.h`, between its `USER CODE` lines, which every install keeps:
 
 ```c
 #define SEQ_MAX_TASKS       16U
@@ -413,7 +413,7 @@ ctest --test-dir build --output-on-failure
 Three things moved:
 
 - The files now live in `src/` instead of the repository root
-- `seq_config.h` now ships in `src/`. Copy it once and that copy is yours from then on
+- `seq_config.h` now ships in `src/`, and your settings go between its `USER CODE` lines
 - `seq.h` no longer includes `main.h`. If a file of yours relied on that, include `main.h` yourself
 
 Your state and task functions need one change each. A state now takes the handle it belongs to and the argument it was entered with, and a task takes the argument it was queued with:
