@@ -14,9 +14,9 @@
  *              SPDX-License-Identifier: Apache-2.0
  *              See LICENSE.md in the project root for the full license text.
  *
- * @note        Your copy of this file is yours. The installer creates it once
- *              and never touches it again, so updating the library cannot
- *              overwrite a setting you changed.
+ * @note        Your settings go between the USER CODE markers. The installer
+ *              replaces the rest of this file on every update and keeps what
+ *              is between them, so a setting you changed is never lost.
  */
 
 #ifndef SEQ_CONFIG_H

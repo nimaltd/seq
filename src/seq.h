@@ -35,9 +35,9 @@
  * ****************************************************************************************************
 */
 
-/* Checked here and never in seq_config.h. That file is the user's: it is copied
-   once and never replaced, so a check in it can be edited away and would never
-   reach anyone who installed before it was added. */
+/* Checked here and never in seq_config.h. The part of that file between its
+   USER CODE markers is the user's and survives every update, so a check in it
+   could be edited away, and one added later would never reach it. */
 
 /* One slot is always kept free so a full queue can be told apart from an empty
    one, which leaves SEQ_MAX_TASKS - 1 usable. With 1 there would be none, and
