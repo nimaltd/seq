@@ -20,8 +20,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - The code is 24 bytes smaller on a Cortex-M4 at `-Os`.
 - `seq_config.h` is installed like the other files, and stm32-installer keeps
   what is between its `USER CODE` lines, so a fix to the file reaches you too.
-  Needs stm32-installer 1.7.1 or newer; an older one stops and says to update,
-  rather than overwrite your settings.
+- The file stm32-installer reads is `installer.yml`, no longer `library.yml`.
+  Needs stm32-installer 1.9.0 or newer, the first that reads it.
 
 ## [2.0.1] - 2026-09-28
 

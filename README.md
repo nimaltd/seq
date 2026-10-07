@@ -67,7 +67,7 @@ Only the files the library needs are copied into your project, and the zip is le
 
 ### Updating, and pinning a version
 
-Run the same command again. Every file is replaced, and your settings in `seq_config.h` are kept: whatever is between `USER CODE BEGIN SEQ_CONFIGURATION` and `USER CODE END SEQ_CONFIGURATION`. Anything you changed outside those lines is saved to a `.bak` file first. This needs stm32-installer 1.7.1 or newer, and an older one says to update.
+Run the same command again. Every file is replaced, and your settings in `seq_config.h` are kept: whatever is between `USER CODE BEGIN SEQ_CONFIGURATION` and `USER CODE END SEQ_CONFIGURATION`. Anything you changed outside those lines is saved to a `.bak` file first. This needs stm32-installer 1.9.0 or newer. An older one cannot find the library: update it with `pip install --upgrade stm32-installer`.
 
 By default you get the newest code on `main`. To hold a project on one release, add `--ref` with a tag, a branch or a commit:
 
