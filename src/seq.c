@@ -53,6 +53,7 @@ typedef struct
     __IO uint32_t      head;               /**< Slot the producer writes next.   */
     __IO uint32_t      tail;               /**< Slot the consumer reads next.    */
     __IO uint32_t      peak;               /**< Deepest the queue has ever been. */
+    uint32_t          flush_generation;   /**< Changed by the consumer on a flush. */
 
 } seq_queue_t;
 
@@ -276,6 +277,7 @@ void seq_task_flush(void)
        move it, which is why this is not for an interrupt. Called from a task,
        it also drops the tasks still due in this pass. */
     seq_queue.tail = seq_queue.head;
+    seq_queue.flush_generation++;
 
     __set_PRIMASK(primask);
 }
@@ -396,7 +398,8 @@ static void seq_queue_run(void)
        waits for the next pass. Draining to empty would never return if a task
        kept requeueing itself, or if an interrupt produced faster than this
        drains, and the state machine would never run again. */
-    uint32_t count = (seq_queue.head + SEQ_MAX_TASKS - seq_queue.tail) % SEQ_MAX_TASKS;
+    uint32_t count      = (seq_queue.head + SEQ_MAX_TASKS - seq_queue.tail) % SEQ_MAX_TASKS;
+    uint32_t generation = seq_queue.flush_generation;
 
     /* Stopping at an empty queue as well is what makes seq_task_flush() safe
        inside a task. It moves tail up to wherever head has got to, which is
@@ -404,7 +407,11 @@ static void seq_queue_run(void)
        used to wait for tail to reach that end, so it went round the whole ring
        instead, running every stale task left in the slots, and once it came
        back to the flushing task's own slot it never returned. */
-    while ((count > 0U) && (seq_queue.tail != seq_queue.head))
+    /* A task may flush and immediately queue new work, so an empty check
+       alone cannot tell that the original burst was discarded. Flushes are
+       consumer-only, so the generation needs no interrupt synchronization. */
+    while ((count > 0U) && (seq_queue.tail != seq_queue.head) &&
+           (seq_queue.flush_generation == generation))
     {
         uint32_t      tail      = seq_queue.tail;
         seq_task_fn_t task_fn   = seq_queue.fn[tail];
