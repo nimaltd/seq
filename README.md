@@ -41,29 +41,25 @@ installed copy.
 
 ## ⚙️ Installing it
 
-[lib-installer](https://github.com/nimaltd/lib-installer) copies the library into your project, `seq_config.h` included, and adds it to your CMake, STM32CubeIDE, Keil, IAR or Makefile project for you. Your project file is backed up first.
+[libNIMA](https://github.com/nimaltd/libNIMA) copies the library into your project, `seq_config.h` included, and adds it to your CMake, STM32CubeIDE, Keil, IAR or Makefile project for you. Your project file is backed up first.
 
-Install it once per machine:
-
-```bash
-pip install lib-installer
-```
+Get it once per machine from [its releases page](https://github.com/nimaltd/libNIMA/releases/latest): the installer for Windows, macOS or Linux, which puts the `libnima` command on your PATH as well.
 
 Then, from the root of your STM32 project:
 
 ```bash
-lib-installer nimaltd/seq
+libnima nimaltd/seq
 ```
 
 ### From a downloaded zip
 
-Downloaded this repository with **Code**, **Download ZIP**? Give the installer the zip in place of `nimaltd/seq`, with no need to unpack it:
+Downloaded this repository with **Code**, **Download ZIP**? Give libNIMA the zip in place of `nimaltd/seq`, with no need to unpack it:
 
 ```bash
-lib-installer D:/Downloads/seq-main.zip
+libnima D:/Downloads/seq-main.zip
 ```
 
-Only the files the library needs are copied into your project, and the zip is left alone. An unpacked folder works the same way. [lib-installer's README](https://github.com/nimaltd/lib-installer#installing-a-library) has every option, and how to install on a machine with no internet at all.
+Only the files the library needs are copied into your project, and the zip is left alone. An unpacked folder works the same way. [libNIMA's README](https://github.com/nimaltd/libNIMA#using-it) has every option, and how to install on a machine with no internet at all.
 
 ### Updating, and pinning a version
 
@@ -72,7 +68,7 @@ Run the same command again. Every file is replaced, and your settings in `seq_co
 By default you get the newest code on `main`. To hold a project on one release, add `--ref` with a tag, a branch or a commit:
 
 ```bash
-lib-installer nimaltd/seq --ref v2.0.0
+libnima nimaltd/seq --ref v2.0.0
 ```
 
 ### Or copy the files in by hand
@@ -81,7 +77,7 @@ lib-installer nimaltd/seq --ref v2.0.0
 2. Copy `src/seq.c` into your project's `Core/Src`
 3. Copy `src/seq_config.h` into `Core/Inc`
 
-Keep your settings between its `USER CODE BEGIN` and `USER CODE END` lines. Installing later with lib-installer keeps what is between them and replaces the rest.
+Keep your settings between its `USER CODE BEGIN` and `USER CODE END` lines. Installing later with libNIMA keeps what is between them and replaces the rest.
 
 ### Or add the whole repository to a CMake build
 
@@ -99,7 +95,7 @@ target_link_libraries(seq PRIVATE stm32cubemx)
 
 The first `target_link_libraries` has no `PRIVATE` on purpose. CubeMX links your application without one, and CMake refuses to mix the two forms on one target. The settings come from `seq/src/seq_config.h`, beside `seq.h`.
 
-`lib-installer` avoids all of this: it writes an INTERFACE target instead, whose sources compile as part of your own target and inherit everything it has.
+`libnima` avoids all of this: it writes an INTERFACE target instead, whose sources compile as part of your own target and inherit everything it has.
 
 ---
 

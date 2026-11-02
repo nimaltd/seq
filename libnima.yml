@@ -1,6 +1,6 @@
-# Read by lib-installer. See https://github.com/nimaltd/lib-installer
+# Read by libNIMA. See https://github.com/nimaltd/libNIMA
 #
-# There is no version here. The installer reads it from the @version tag in
+# There is no version here. libNIMA reads it from the @version tag in
 # seq.h, so the source files are the only place it is written.
 
 name: seq
@@ -23,18 +23,20 @@ provides: []
 
 # What the project has to offer before this library works.
 requires:
-  lib_installer: 4.0.0 # the oldest lib-installer that reads this file
+  libnima: 1.0.0       # the oldest libNIMA that reads this file
   libraries: []       # other NimaLTD libraries, by name
-  hal: true           # uses HAL_GetTick
-  cmsis: true         # uses __DMB
-  rtos: none          # none, optional, any, freertos, cmsis-os2, threadx
-  hal_modules: []     # only the core tick is needed, which is always built
   peripherals: []     # no peripheral of its own
-  c_standard: c11
 
-# Written for 2.1.0: every file keeps the path it has here, so src/ lands in
-# the user's project just as it sits, and headers and sources need no files
-# around them.
+stm32:
+  requires:
+    hal: true           # uses HAL_GetTick
+    cmsis: true         # uses __DMB
+    rtos: none          # none, optional, any, freertos, cmsis-os2, threadx
+    hal_modules: []     # only the core tick is needed, which is always built
+    c_standard: c11
+
+# Every file keeps the path it has here, so src/ lands in the user's project
+# just as it sits.
 
 headers:
   - src/seq.h
