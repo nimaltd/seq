@@ -107,6 +107,7 @@ static void state_waits_then_times_out(seq_t *handle, void *arg);
 static void state_counts_first_runs(seq_t *handle, void *arg);
 static void state_moves_on_then_asks(seq_t *handle, void *arg);
 static void task_queues_then_flushes(void *arg);
+static void task_flushes_then_queues(void *arg);
 
 /*
  * ****************************************************************************************************
@@ -878,6 +879,31 @@ void test_work_queued_during_a_burst_waits(void)
 
 /*****************************************************************************************************/
 /**
+ * @brief Tasks queued after a task flushes the queue wait for the next pass.
+ */
+void test_work_queued_after_a_flush_waits(void)
+{
+    int payload = 42;
+
+    seq_init(&test_seq, state_a, NULL);
+    (void)seq_task_add(task_flushes_then_queues, &payload);
+    (void)seq_task_add(task_two, NULL);
+
+    seq_loop(&test_seq);
+    TEST_ASSERT_EQUAL_INT(1, flusher_runs);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(0, task_calls, "new work ran in the flushing pass");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(0, task_two_calls, "a flushed task ran");
+    TEST_ASSERT_EQUAL_INT(1, state_a_calls);
+
+    seq_loop(&test_seq);
+    TEST_ASSERT_EQUAL_INT(1, task_calls);
+    TEST_ASSERT_EQUAL_PTR(&payload, last_task_arg);
+    TEST_ASSERT_EQUAL_INT(0, task_two_calls);
+    TEST_ASSERT_EQUAL_INT(2, state_a_calls);
+}
+
+/*****************************************************************************************************/
+/**
  * @brief A flush from inside a task drops what is left and runs nothing twice.
  *
  * The task queues one more and then flushes, with another task still due in the
@@ -1024,6 +1050,7 @@ int main(void)
     RUN_TEST(test_the_queue_reports_how_deep_it_ever_got);
     RUN_TEST(test_flush_empties_the_queue);
     RUN_TEST(test_time_is_zero_once_stopped);
+    RUN_TEST(test_work_queued_after_a_flush_waits);
     RUN_TEST(test_a_flush_inside_a_task_runs_nothing_again);
     RUN_TEST(test_first_run_is_only_the_first);
     RUN_TEST(test_every_transition_starts_a_new_first_run);
@@ -1272,6 +1299,17 @@ static void state_moves_on_then_asks(seq_t *handle, void *arg)
     {
         later_runs++;
     }
+}
+
+/*****************************************************************************************************/
+/**
+ * @brief Drop the old queue and hand new work to the next loop pass.
+ */
+static void task_flushes_then_queues(void *arg)
+{
+    flusher_runs++;
+    seq_task_flush();
+    TEST_ASSERT_EQUAL_INT(SEQ_ERR_NONE, seq_task_add(task_one, arg));
 }
 
 /*****************************************************************************************************/
